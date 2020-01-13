@@ -4,14 +4,12 @@
 namespace App\Controller;
 
 
-use App\Service\Greeting;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\RouterInterface;
 use Twig\Environment;
 
 /**
@@ -28,18 +26,29 @@ class BlogController
      * @var SessionInterface
      */
     private $session;
+    /**
+     * @var RouterInterface
+     */
+    private $router;
 
 
-    public function __construct(Environment $twig, SessionInterface $session)
+    /**
+     * BlogController constructor.
+     * @param Environment $twig
+     * @param SessionInterface $session
+     * @param RouterInterface $router
+     */
+    public function __construct(Environment $twig, SessionInterface $session, RouterInterface $router)
    {
        $this->twig = $twig;
        $this->session = $session;
+       $this->router = $router;
    }
 
     /**
-     * @Route("/{name}", name="blog_index")
+     * @Route("/", name="blog_index")
      */
-   public function index($name)
+   public function index()
    {
        $html = $this->twig->render(
            'blog/index.html.twig',
@@ -58,9 +67,12 @@ class BlogController
        $posts = $this->session->get('posts');
        $posts[uniqid()] = [
            'title' => 'A random title' .rand(1,500),
-           'text' => 'A random text' .rand(1, 500)
+           'text' => 'A random text' .rand(1, 500),
+           'date' => new \DateTime(),
        ];
        $this->session->set('posts', $posts);
+
+       return new RedirectResponse($this->router->generate('blog_index'));
    }
 
     /**
